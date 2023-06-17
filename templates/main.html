@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dr. Emerson AI</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Roboto", sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #f5f5f5; /* light background */
+        color: #333; /* dark text */
+      }
+
+      body.dark-mode {
+        background-color: #333; /* dark background */
+        color: #f5f5f5; /* light text */
+      }
+
+      h1 {
+        font-weight: 700;
+        font-size: 2.3rem;
+        margin-top: 30px;
+      }
+
+      button {
+        background: #888;
+        border: none;
+        color: #fff;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px 2px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+
+      #feelingsButtons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      button.selected {
+        background: #00ff00;
+        color: black;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 10px 10px;
+        box-sizing: border-box;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        background-color: #f8f8f8;
+        resize: none;
+        font-family: Monaco, "Courier New", Consolas, monospace;
+      }
+
+      /* New styles for labels (titles) */
+      label.large-font {
+        font-size: 1.2em; /* adjust this value */
+      }
+
+      /* New styles for textareas */
+      textarea.large-font {
+        font-size: 1em; /* adjust this value */
+      }
+
+      #userInput {
+        height: 150px;
+        margin-top: 8px;
+      }
+
+      #submitToGPT35 {
+        background: #3498db; /* light blue */
+        color: #fff; /* white text */
+      }
+
+      #modelOutput {
+        height: 500px;
+        margin-top: 8px;
+      }
+
+      .input-container,
+      .textarea-container {
+        width: 70%;
+        margin: 20px auto;
+      }
+
+      .text-field-container {
+        width: 70%;
+      }
+
+      #loading {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        background-color: #333;
+        color: #fff;
+        border-radius: 10px;
+        display: none;
+      }
+
+      .hidden {
+        display: none;
+      }
+      .startOver-clicked {
+        animation: flashGreen 0.2s;
+      }
+
+      @keyframes flashGreen {
+        0% {
+          background-color: #888;
+        }
+        50% {
+          background-color: #00ff00;
+        }
+        100% {
+          background-color: #888;
+        }
+      }
+    </style>
+  </head>
+  <body class="dark-mode">
+    <h1>Dr. Emerson AI</h1>
+    <button id="startOver">Start Over</button>
+    <h2>How are you feeling?</h2>
+    <div id="feelingsButtons">
+      <button id="Happy">Happy</button>
+      <button id="Sad">Sad</button>
+      <button id="Neutral">Neutral</button>
+      <button id="Worried">Worried</button>
+      <button id="Angry">Angry</button>
+      <button id="Anxious">Anxious</button>
+      <button id="Depressed">Depressed</button>
+      <button id="Hopeless">Hopeless</button>
+      <button id="JustChat">Just Chat</button>
+    </div>
+    <div id="loading" class="hidden">Loading...</div>
+    <div
+      class="input-container text-field-container hidden"
+      id="userInputContainer"
+    >
+      <label class="large-font">You:</label>
+      <textarea
+        id="userInput"
+        class="large-font"
+        rows="2"
+        style="height: 150px"
+      ></textarea>
+    </div>
+    <div>
+      <button id="ClearText" class="hidden">Clear Your Text</button>
+    </div>
+    <div>
+      <button id="submitToGPT35">Submit</button>
+    </div>
+    <div class="text-field-container">
+      <label class="large-font">Dr. Emerson:</label>
+      <textarea
+        id="modelOutput"
+        class="large-font"
+        style="height: 500px"
+      ></textarea>
+    </div>
+    <div>
+      <button id="copyModelOutput">Copy Model Output</button>
+      <button id="toggleDarkMode">Light / Dark Mode</button>
+    </div>
+    <script>
+      document.body.classList.add("dark-mode");
+
+      const subcategoryData = {
+        "How are you feeling": [
+          "Happy",
+          "Sad",
+          "Neutral",
+          "Worried",
+          "Angry",
+          "Anxious",
+          "Depressed",
+          "Hopeless",
+          "JustChat",
+        ],
+      };
+
+      let promptsData = {};
+
+      const feelingsButtons = document.querySelectorAll(
+        "#feelingsButtons button"
+      );
+
+      fetch("/static/howfeeling.json")
+        .then((response) => response.json())
+        .then((data) => {
+          promptsData = data["How are you feeling"];
+          feelingsButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+              feelingsButtons.forEach((btn) =>
+                btn.classList.remove("selected")
+              );
+              this.classList.add("selected");
+
+              // Fetch the JSON for the corresponding emotion
+              const emotion = this.id; // The ID of the button is the emotion
+              const prompt = promptsData[emotion]; // This assumes promptsData is a dictionary mapping emotions to prompts
+            });
+          });
+        });
+
+      function showLoading() {
+        document.getElementById("loading").style.display = "block";
+      }
+
+      function hideLoading() {
+        document.getElementById("loading").style.display = "none";
+      }
+
+      function sendQuery(prompt, model, outputField = "modelOutput") {
+        showLoading(); // Show the loading icon
+        fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt: prompt, model: model }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const outputTextArea = document.getElementById(outputField);
+            outputTextArea.value += `${data.response}\n\n`;
+            outputTextArea.scrollTop = outputTextArea.scrollHeight;
+            hideLoading(); // Hide the loading icon
+          });
+      }
+
+      let isButtonClickedFirstTime = true; // Keep track of the first click
+
+      document.getElementById("submitToGPT35").addEventListener("click", () => {
+        console.log("Submit button clicked");
+
+        // Unhide the Clear Text button
+        document.getElementById("ClearText").classList.remove("hidden");
+
+        const selectedFeelingButton = document.querySelector(
+          "#feelingsButtons button.selected"
+        );
+
+        if (!selectedFeelingButton) {
+          console.log("No feeling selected");
+          return;
+        }
+
+        const emotion = selectedFeelingButton.id;
+        let prompt;
+
+        if (
+          document
+            .getElementById("userInputContainer")
+            .classList.contains("hidden")
+        ) {
+          // If user input is hidden, this means the emotion button was just clicked
+          document.getElementById("feelingsButtons").classList.add("hidden");
+          document
+            .getElementById("userInputContainer")
+            .classList.remove("hidden");
+          prompt = promptsData[emotion];
+
+          // Hide feelings buttons after first click
+          if (isButtonClickedFirstTime) {
+            document.getElementById("feelingsButtons").style.display = "none";
+            isButtonClickedFirstTime = false;
+          }
+        } else {
+          // If user input is shown, this means the user has typed in a response
+          const userInput = document.getElementById("userInput").value;
+          if (!userInput.trim()) {
+            // If user input is empty, use the prompt associated with the selected emotion
+            prompt = promptsData[emotion];
+          } else {
+            // If user input is not empty, use it as the prompt
+            prompt = userInput;
+          }
+        }
+
+        console.log("Submitting prompt: ", prompt);
+        sendQuery(prompt, "gpt-3.5-turbo", "modelOutput");
+      });
+
+      function clearSelected(buttonList) {
+        buttonList.forEach((button) => {
+          button.classList.remove("selected");
+        });
+      }
+
+      function selectButton(button) {
+        clearSelected(document.querySelectorAll("button")); // Clear all selected buttons
+        button.classList.add("selected");
+      }
+
+      // Event listener for the Clear Text button
+      document.getElementById("ClearText").addEventListener("click", () => {
+        document.getElementById("userInput").value = "";
+        document.getElementById("ClearText").classList.add("hidden");
+      });
+
+      const startOverButton = document.getElementById("startOver");
+      document.getElementById("startOver").addEventListener("click", () => {
+        // Add the 'startOver-clicked' class to start the animation
+        startOverButton.classList.add("startOver-clicked");
+        startOverButton.style.animation = "none";
+        setTimeout(() => {
+          startOverButton.style.animation = "";
+        }, 10);
+
+        // clear user inputs
+        document.getElementById("userInput").value = "";
+        document.getElementById("modelOutput").value = "";
+
+        // clear selected buttons
+        clearSelected(feelingsButtons);
+
+        // reset visibility
+        document.getElementById("userInputContainer").classList.add("hidden");
+        document.getElementById("feelingsButtons").classList.remove("hidden");
+        document.getElementById("feelingsButtons").style.display = "flex";
+        document.getElementById("ClearText").classList.add("hidden");
+
+        // Reset conversation
+        fetch("/api/reset", { method: "POST" });
+
+        // Remove the 'startOver-clicked' class once the animation ends
+        startOverButton.addEventListener("animationend", () => {
+          startOverButton.classList.remove("startOver-clicked");
+        });
+      });
+
+      document
+        .getElementById("copyModelOutput")
+        .addEventListener("click", () => {
+          const modelOutput = document.getElementById("modelOutput");
+          modelOutput.select();
+          document.execCommand("copy");
+        });
+
+      document
+        .getElementById("toggleDarkMode")
+        .addEventListener("click", () => {
+          document.body.classList.toggle("dark-mode");
+          if (document.body.classList.contains("dark-mode")) {
+            document.getElementById("toggleDarkMode").innerText = "Light Mode";
+          } else {
+            document.getElementById("toggleDarkMode").innerText = "Dark Mode";
+          }
+        });
+    </script>
+  </body>
+</html>
