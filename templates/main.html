@@ -72,12 +72,10 @@
         font-family: Monaco, "Courier New", Consolas, monospace;
       }
 
-      /* New styles for labels (titles) */
       label.large-font {
         font-size: 1.2em; /* adjust this value */
       }
 
-      /* New styles for textareas */
       textarea.large-font {
         font-size: 1em; /* adjust this value */
       }
@@ -221,7 +219,7 @@
 
               // Fetch the JSON for the corresponding emotion
               const emotion = this.id; // The ID of the button is the emotion
-              const prompt = promptsData[emotion]; // This assumes promptsData is a dictionary mapping emotions to prompts
+              const prompt = promptsData[emotion];
             });
           });
         });
@@ -312,7 +310,7 @@
       }
 
       function selectButton(button) {
-        clearSelected(document.querySelectorAll("button")); // Clear all selected buttons
+        clearSelected(document.querySelectorAll("button"));
         button.classList.add("selected");
       }
 
